@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="https://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Document manager</title>
+    <link rel="stylesheet" type="text/css" href="/webjars/bootstrap/4.6.0-1/css/bootstrap.min.css"/>
+</head>
+<body>
+
+<div class="container-fluid text-center">
+    <div>
+        <h1>Document manager</h1>
+    </div>
+    <div class="text-success">
+        <h3>
+            [[${message}]]
+        </h3>
+    </div>
+    <div>
+        <form th:action="@{/upload}" method="post" enctype="multipart/form-data" style="max-width:600px; margin: 0">
+            <div class="border rounded m-3">
+                <h2>Upload files : </h2>
+                <p>
+                    <input type="file" name="document" required/>
+                </p>
+                <p>
+                    <input type="submit" value="Upload" class="btn-primary">
+                </p>
+            </div>
+
+        </form>
+    </div>
+</div>
+</body>
+</html>
