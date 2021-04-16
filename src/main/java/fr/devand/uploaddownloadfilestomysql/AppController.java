@@ -19,6 +19,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -52,7 +54,7 @@ public class AppController {
             RedirectAttributes redirectAttributes
     ) throws IOException, Exception {
         String filename = StringUtils.cleanPath(multipartFile.getOriginalFilename());
-
+String pathWrite="e:\\test\\upload";
         Document document = new Document();
         document.setName(filename);
 //        document.setContent(multipartFile.getBytes());
@@ -60,6 +62,13 @@ public class AppController {
         document.setPath(filename);
         document.setUploadTime(new Date());
         documentRepository.save(document);
+        pathWrite=pathWrite+"\\"+filename;
+        try{
+        Files.write(Paths.get(pathWrite),filename.getBytes());
+        }
+        catch (IOException ioException){
+            ioException.printStackTrace();
+        }
         String message = "upload ok";
         redirectAttributes.addFlashAttribute("message", message);
         if (document.getSize() > 10000000) {
