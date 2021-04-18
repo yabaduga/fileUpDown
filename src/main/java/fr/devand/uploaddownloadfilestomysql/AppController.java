@@ -3,27 +3,35 @@ package fr.devand.uploaddownloadfilestomysql;
 import fr.devand.uploaddownloadfilestomysql.model.Document;
 import fr.devand.uploaddownloadfilestomysql.repository.DocumentRepository;
 import fr.devand.uploaddownloadfilestomysql.service.DocumentService;
+
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.query.Param;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Controller
 public class AppController {
@@ -32,6 +40,9 @@ public class AppController {
 
     @Autowired
     private DocumentService documentService;
+
+    private Logger logger = LoggerFactory.getLogger(AppController.class);
+
 
     @GetMapping("/")
     public String viewHomePage() {
@@ -54,7 +65,7 @@ public class AppController {
             RedirectAttributes redirectAttributes
     ) throws IOException, Exception {
         String filename = StringUtils.cleanPath(multipartFile.getOriginalFilename());
-String pathWrite="e:\\test\\upload";
+        String pathWrite = "e:\\test\\upload";
         Document document = new Document();
         document.setName(filename);
 //        document.setContent(multipartFile.getBytes());
@@ -62,11 +73,10 @@ String pathWrite="e:\\test\\upload";
         document.setPath(filename);
         document.setUploadTime(new Date());
         documentRepository.save(document);
-        pathWrite=pathWrite+"\\"+filename;
-        try{
-        Files.write(Paths.get(pathWrite),filename.getBytes());
-        }
-        catch (IOException ioException){
+        pathWrite = pathWrite + "\\" + filename;
+        try {
+            Files.write(Paths.get(pathWrite), filename.getBytes());
+        } catch (IOException ioException) {
             ioException.printStackTrace();
         }
         String message = "upload ok";
@@ -95,8 +105,57 @@ String pathWrite="e:\\test\\upload";
 
         return model;
     }
-
     @GetMapping("/download")
+    public void downloadFile(@Param("name") String name, HttpServletResponse response) throws Exception {
+        documentRepository.findByName(name);
+        Optional<Document> result = documentRepository.findByName(name);
+        if (!result.isPresent()) {
+            throw new Exception("No Document id :" + name);
+        }
+
+        Document document = result.get();
+        response.setContentType("application/octet-stream");
+        String headerKey = "Content-Disposition";
+        String headerValue = "attachment; filename =" + document.getName();
+        response.setHeader(headerKey, headerValue);
+        ServletOutputStream outputStream = response.getOutputStream();
+        outputStream.write(document.getContent());
+        outputStream.close();
+
+    }
+
+    @Controller
+    @RequestMapping("/downloadFile")
+    public class FileDownloadController
+    {
+        @RequestMapping("/files/{fileName:.+}")
+        public void downloadPDFResource( HttpServletRequest request,
+                                         HttpServletResponse response,
+                                         @PathVariable("fileName") String fileName)
+        {
+            //If user is not authorized - he should be thrown out from here itself
+
+            //Authorized user will download the file
+            String dataDirectory = request.getServletContext().getRealPath("/WEB-INF/downloads/files/");
+            Path file = Paths.get(dataDirectory, fileName);
+            if (Files.exists(file))
+            {
+
+                response.setContentType("application/pdf");
+                response.addHeader("Content-Disposition", "attachment; filename="+fileName);
+                try
+                {
+                    Files.copy(file, response.getOutputStream());
+                    response.getOutputStream().flush();
+                }
+                catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+    }
+
+   /* @GetMapping("/download")
     public void downloadFile(@Param("id") Long id, HttpServletResponse response) throws Exception {
         documentRepository.findById(id);
         Optional<Document> result = documentRepository.findById(id);
@@ -113,5 +172,5 @@ String pathWrite="e:\\test\\upload";
         outputStream.write(document.getContent());
         outputStream.close();
 
-    }
+    }*/
 }

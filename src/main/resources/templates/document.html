@@ -22,7 +22,8 @@
                     <img th:src="@{/imgs/fileicon.png}" width="15"/>
                 </div>
                 <div>
-                    <a th:href="@{'/download?id=' + ${doc.id}}">[[${doc.name}]]</a>
+                    <a th:href="@{'/downloadFile/files/' + ${doc.name}}">[[${doc.name}]]</a>
+<!--                    <a href="javascript:void(0);" onclick="downClick();">[[${doc.name}]]</a>-->
 
                 </div>
             </div>
@@ -46,8 +47,10 @@
         </form>
 
 </div>
-<script>
+<script type="text/javascript">
     $('.file-upload').file_upload();
+
 </script>
+
 </body>
 </html>
